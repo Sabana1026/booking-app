@@ -1,28 +1,5 @@
 import React, { useState } from 'react';
 
-const SCREENS = [
-  {
-    id: 1,
-    time: "10.00AM",
-    seats: [1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1],
-  },
-  {
-    id: 2,
-    time: "2.00PM",
-    seats: [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
-  },
-  {
-    id: 3,
-    time: "6.00PM",
-    seats: [1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1],
-  },
-  {
-    id: 4,
-    time: "10.00PM",
-    seats: [1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1],
-  },
-];
-
 const MOVIES = [
   {
     id: 1,
@@ -48,8 +25,28 @@ const MOVIES = [
 
 export default function Movies() {
   const [selectedMovie, setSelectedMovie] = useState(null);
-  const [selectedScreen, setSelectedScreen] = useState(null); 
-  const [selectedSeats, setSelectedSeats] = useState([]); 
+  const [selectedScreen, setSelectedScreen] = useState(null);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  
+  // Initialize screens for each movie
+  const [screens, setScreens] = useState({
+    1: [
+      { id: 1, time: "10.00AM", seats: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+      { id: 2, time: "2.00PM", seats: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+    ],
+    2: [
+      { id: 1, time: "10.00AM", seats: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+      { id: 2, time: "2.00PM", seats: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+    ],
+    3: [
+      { id: 1, time: "10.00AM", seats: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+      { id: 2, time: "2.00PM", seats: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+    ],  
+     4: [
+      { id: 1, time: "10.00AM", seats: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+      { id: 2, time: "2.00PM", seats: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+    ],
+  });
 
   const handleSeatSelect = (index, screen) => {
     if (screen?.id !== selectedScreen?.id) {
@@ -57,33 +54,42 @@ export default function Movies() {
       setSelectedScreen(screen);
       return;
     }
-    setSelectedScreen(screen)
     if (selectedSeats.includes(index)) {
       setSelectedSeats(selectedSeats.filter((i) => i !== index));
-      if(selectedSeats.filter((i) => i !== index).length <1){
-setSelectedScreen(null)
- }
+      if (selectedSeats.filter((i) => i !== index).length < 1) {
+        setSelectedScreen(null);
+      }
     } else {
       setSelectedSeats((seats) => [...seats, index]);
     }
-  }
-const handleBooking=()=>{
-  alert(`Seats ${selectedSeats.map((index) => index+1).join(", ")} booked for ${selectedMovie.title} at ${selectedScreen.time}`)
-  SCREENS = SCREENS.map(screen =>{
-    if(screen.id ===selectedScreen?.id){
-      let seats =screen.seats;
-      selectedSeats.map((seat) => (seats[seat] =0))
-      return {
-        ...screen, 
-        seats
+  };
+
+  const handleBooking = () => {
+    alert(`Seats ${selectedSeats.map((index) => index + 1).join(", ")} booked for ${selectedMovie.title} at ${selectedScreen.time}`);
+    
+    // Update screens data for the specific movie
+    const updatedScreens = { ...screens }; 
+    const movieScreens = updatedScreens[selectedMovie.id];
+    const updatedMovieScreen = movieScreens.map(screen => {
+      if (screen.id === selectedScreen.id) {
+        const updatedSeats = [...screen.seats];
+        selectedSeats.forEach((seat) => {
+          updatedSeats[seat] = 0; // Mark seat as booked
+        });
+        return { ...screen, seats: updatedSeats };
       }
-      }
-    return screen
-  })
-  setSelectedMovie(null)
-  setSelectedScreen(null)
-  setSelectedSeats([])
-}
+      return screen;
+    });
+
+    updatedScreens[selectedMovie.id] = updatedMovieScreen;
+    setScreens(updatedScreens);  // Update the state
+
+    // Reset selection
+    setSelectedMovie(null);
+    setSelectedScreen(null);
+    setSelectedSeats([]);
+  };
+
   return (
     <div>
       <h2>Recommended Movies</h2>
@@ -104,11 +110,11 @@ const handleBooking=()=>{
         <>
           <h2>Choose Your Screen</h2>
           <div className="screen-selection">
-            {SCREENS.map((screen) => (
+            {screens[selectedMovie.id].map((screen) => (
               <div
                 key={screen.id}
                 className={`screen ${screen.id === selectedScreen?.id ? "selected" : ""} ${screen.seats.includes(1) ? "available" : ""}`}
-                onClick={() => setSelectedScreen(screen)} 
+                onClick={() => setSelectedScreen(screen)}
               >
                 <div className="screen-number">Screen {screen.id}</div>
                 <div className="screen-time">{screen.time}</div>
@@ -134,33 +140,32 @@ const handleBooking=()=>{
         </>
       )}
       <div className="booking-summary">
-<div className="selected-screen">
-{
-  selectedScreen &&(
-<div>
-  <h3>Selected Screen: {selectedScreen.id}</h3>
-<p>Time: {selectedScreen.time}</p>
-<p>Movie:{selectedMovie.title} </p>
-</div>
-  )
-}
-</div>
-
-<div className ="selected-seat">
-  {
-    selectedScreen && selectedSeats?.length >0 &&(
-      <div>
-        <h3>Selected Seats:<>  {selectedSeats.map(index=>index+1).join(", ")} </> </h3>
-        <h3>No of Tickets: {selectedSeats?.length}</h3>
+        <div className="selected-screen">
+          {selectedScreen && (
+            <div>
+              <h3>Selected Screen: {selectedScreen.id}</h3>
+              <p>Time: {selectedScreen.time}</p>
+              <p>Movie: {selectedMovie.title}</p>
             </div>
-    )
-  }
-</div>
-</div>
-<button 
-className="payment-button" 
-onClick={handleBooking} 
-disabled={!selectedScreen || selectedSeats?.length===0}>Book Now</button>
- </div>
+          )}
+        </div>
+
+        <div className="selected-seat">
+          {selectedScreen && selectedSeats?.length > 0 && (
+            <div>
+              <h3>Selected Seats: {selectedSeats.map((index) => index + 1).join(", ")}</h3>
+              <h3>No of Tickets: {selectedSeats?.length}</h3>
+            </div>
+          )}
+        </div>
+      </div>
+      <button
+        className="payment-button"
+        onClick={handleBooking}
+        disabled={!selectedScreen || selectedSeats?.length === 0}
+      >
+        Book Now
+      </button>
+    </div>
   );
 }
